@@ -1,0 +1,7 @@
+venv
+notes.txt
+data.csv
+model.csv
+demo.py
+.idea
+*.pyc
