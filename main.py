@@ -172,8 +172,6 @@ if __name__ == '__main__':
         URL = os.getenv('URL')
         SEARCH_CSV = os.getenv('SEARCH_CSV')
         DATA_CSV = os.getenv('DATA_CSV')
-        NUMBER_PROCESS = int(os.getenv('NUMBER_PROCESS'))
-        NUMBER_ARTICLES_PER_PAGE = int(os.getenv('NUMBER_ARTICLES_PER_PAGE'))
         USER_DATABASE = os.getenv('USER_DATABASE')
         PASSWORD_DATABASE = os.getenv('PASSWORD_DATABASE')
         HOST_DATABASE = os.getenv('HOST_DATABASE')
