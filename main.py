@@ -19,7 +19,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome import service
 
-ENV_DEFAULT_PATH = r'/media/miguel/Desarrollo/neoauto-selenium/.env'
+ENV_DEFAULT_PATH = r'F:\neoauto-selenium\.env'
 
 
 def create_list_links(driver, url):
@@ -76,7 +76,6 @@ def get_articles_from_link(driver, driver_wait, links):
         data_auto['ID'] = link.split('-')[-1]
         data_auto['Fecha'] = date
 
-        print(len(meta_content), len(content), len(meta_specs), len(specs))
         if (len(meta_content) == 0 and len(content) == 0) or (len(meta_specs) == 0 and len(specs) == 0):
             print('ERROR. Changes class name from content or specs of articles. Renueve class name')
             exit()
