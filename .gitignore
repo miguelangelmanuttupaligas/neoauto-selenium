@@ -5,3 +5,4 @@ model.csv
 demo.py
 .idea
 *.pyc
+credentials.txt

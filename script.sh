@@ -18,8 +18,5 @@ sudo apt-get install unzip
 unzip chromedriver_linux64.zip
 rm chromedriver_linux64.zip
  
-# Manual process
-nano .env
-nano main.py
-nano search.csv
+# Execute
 venv/bin/python main.py

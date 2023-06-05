@@ -19,7 +19,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome import service
 
-ENV_DEFAULT_PATH = r'F:\neoauto-selenium\.env'
+ENV_DEFAULT_PATH = r'/mnt/Principal/Trabajo/neoauto-selenium/.env'
 
 
 def create_list_links(driver, url):
@@ -36,18 +36,29 @@ def create_list_links(driver, url):
 
 
 def filter_articles(driver, list_links, user, password, host, database):
+    '''
+    Este metodo se encarga de recibir una lista de articulos totales de neoauto.com, y los filtra de acuerdo a si
+    previamente ya fueron scrapeados, o no. En caso ya fueran scrapeados, se excluyen, comparandose con un historico
+    ubicado en una tabla de una base de datos.
+    :param driver:
+    :param list_links:
+    :param user:
+    :param password:
+    :param host:
+    :param database:
+    :return:
+    '''
     all_ids_and_links = dict()
     filtered_links = []
     for link in list_links:
         driver.get(link)
-        # driver.implicitly_wait(10)
         link_articles = chrome_driver.find_elements(By.CLASS_NAME, 'c-results-use__link')
-        # links = [link_article.get_attribute('href') for link_article in link_articles]
         for link_article in link_articles:
             link = link_article.get_attribute('href')
             identify = int(link.split('-')[-1])
             all_ids_and_links[identify] = link
 
+    # Conexion a la base de datos
     conn = get_connection(user, password, host, database)
     sql = f'SELECT ID FROM data;'
     historical_ids = pd.read_sql(sql, conn)['ID'].values.tolist()
@@ -58,6 +69,13 @@ def filter_articles(driver, list_links, user, password, host, database):
 
 
 def get_articles_from_link(driver, driver_wait, links):
+    '''
+    Obtiene información de cada artículo de auto usado, y se guarda en un diccionario
+    :param driver:
+    :param driver_wait:
+    :param links:
+    :return:
+    '''
     autos = []
     for link in links:
         print(f'Processing: {link}')
@@ -77,7 +95,7 @@ def get_articles_from_link(driver, driver_wait, links):
         data_auto['Fecha'] = date
 
         if (len(meta_content) == 0 and len(content) == 0) or (len(meta_specs) == 0 and len(specs) == 0):
-            print('ERROR. Changes class name from content or specs of articles. Renueve class name')
+            print('ERROR. Changes class name from content or specs of articles. renew class name')
             exit()
 
         for key, value in zip(meta_content, content):
@@ -119,6 +137,14 @@ def chunks(lst, n):
 
 
 def prepare_list_process(driver, url, search_csv):
+    '''
+    Cada fila del archivo search.csv es un modelo de auto. En neoauto.com cada modelo es tratado como una página que
+    contiene 0 o más anuncios de autos. En este método se retorna las URL de cada articulo
+    :param driver:
+    :param url:
+    :param search_csv:
+    :return:
+    '''
     list_links = []
     cant_results = 0
     df_search = pd.read_csv(search_csv)
@@ -146,17 +172,12 @@ def get_env_parameters(argv: list):
 
 def main_single(driver, driver_wait, url, search_csv, data_csv, user, password, host, database, table):
     data_results: list[dict] = []
-    # Ejecucion en un unico hilo
     list_links = prepare_list_process(driver, url, search_csv)
     print(f'Link pages list: {list_links}', sep='\n')
     filtered_links = filter_articles(driver, list_links, user, password, host, database)
     print(f'Total links to process after filtering: {len(filtered_links)}')
-    # print(f'Links to process: {filtered_links}')
     if len(filtered_links) != 0:
-        # for link in filtered_links:
         data_results += get_articles_from_link(driver, driver_wait, filtered_links)
-
-        print(data_results)
         to_save(data_csv, data_results, user, password, host, database, table)
     else:
         print(f'Process ended due to the absence of links to process')
@@ -170,7 +191,7 @@ def initializing_driver_and_wait(driver_path):
     driver = webdriver.Chrome(service=serv, options=options)
     driver.delete_all_cookies()
     # driver.maximize_window()
-    return driver, WebDriverWait(driver, 20)
+    return driver, WebDriverWait(driver, 10)
 
 
 if __name__ == '__main__':
@@ -184,15 +205,16 @@ if __name__ == '__main__':
         USER_DATABASE = os.getenv('USER_DATABASE')
         PASSWORD_DATABASE = os.getenv('PASSWORD_DATABASE')
         HOST_DATABASE = os.getenv('HOST_DATABASE')
-        NAME_DATABASE = os.getenv('NAME_DATABASE')
-        NAME_TABLE = os.getenv('NAME_TABLE')
+        DATABASE_NAME = os.getenv('DATABASE_NAME')
+        TABLE_NAME = os.getenv('TABLE_NAME')
     else:
         print(f'ERROR. env file not found in the default path: {env_path}')
         exit()
 
+    # Initializing chrome_driver
     chrome_driver, chrome_wait_driver = initializing_driver_and_wait(DRIVER_LOCATION)
 
-    start_time = time.time()
+    # start_time = time.time()
     main_single(chrome_driver, chrome_wait_driver, URL, SEARCH_CSV, DATA_CSV,
-                USER_DATABASE, PASSWORD_DATABASE, HOST_DATABASE, NAME_DATABASE, NAME_TABLE)
-    print("--- %s seconds ---" % (time.time() - start_time))
+                USER_DATABASE, PASSWORD_DATABASE, HOST_DATABASE, DATABASE_NAME, TABLE_NAME)
+    # print("--- %s seconds ---" % (time.time() - start_time))
